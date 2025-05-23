@@ -3,8 +3,10 @@
 ## Unreleased
 
 ### Added
-- Proper Pass Censoring (got lazy with beta.1)
-
+- Proper Password Censoring (got lazy with beta.1)
+- Better mesaging ui
+- Added server logging so debugging is easier
+- Adding LICENCE
 
 ## [Beta.1]
 ### Added
