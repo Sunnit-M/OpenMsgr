@@ -6,15 +6,21 @@ import threading
 
 # --- Socket.IO Client Setup ---
 class SocketClient:
-    def __init__(self, gui, group_id, password, username):
+    def __init__(self, gui, group_id, password, username, create_group=False):
         self.sio = socketio.Client()
         self.gui = gui
         self.group_id = group_id
         self.password = password
         self.username = username
+        self.create_group = create_group
 
         @self.sio.event
         def connect():
+            if self.create_group:
+                self.sio.emit('create_group', {
+                    'ID': self.group_id,
+                    'pass': self.password
+                })
             # Join group after connecting
             self.sio.emit('join_group', {
                 'ID': self.group_id,
@@ -47,8 +53,14 @@ class SocketClient:
         def disconnect():
             self.gui.add_new_item("Disconnected from server.")
 
-        # Connect to server (change URL if needed)
-        threading.Thread(target=lambda: self.sio.connect('http://localhost:5000'), daemon=True).start()
+        # Connect to server (force websocket transport)
+        threading.Thread(
+            target=lambda: self.sio.connect(
+                'https://openmsgr.onrender.com/',
+                transports=['websocket']
+            ),
+            daemon=True
+        ).start()
 
     def send_message(self, message):
         self.sio.emit('send_message', {
@@ -99,15 +111,8 @@ class MessagesGUI:
 
         self.running = True
 
-        # Socket.IO client
-        self.socket_client = SocketClient(self, self.group_id, self.password, self.username)
-
-        # If creating a group, emit create_group event
-        if create_group:
-            self.socket_client.sio.emit('create_group', {
-                'ID': self.group_id,
-                'pass': self.password
-            })
+        # Pass create_group to SocketClient
+        self.socket_client = SocketClient(self, self.group_id, self.password, self.username, create_group=create_group)
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.mainloop()
