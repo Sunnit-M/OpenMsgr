@@ -1,5 +1,6 @@
 from flask import Flask, request
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "KEY"
@@ -19,11 +20,10 @@ def group_create(data):
     password = data['pass']
 
     if group_id in groups:
-        emit('group_create_staus',False)
-
+        emit('group_create_status', False)  # Fixed typo: 'group_create_staus' -> 'group_create_status'
     else:
-        groups[group_id] = {'password': password, 'messages':[], 'users': []}
-        emit('group_create_status',True)
+        groups[group_id] = {'password': password, 'messages': [], 'users': []}
+        emit('group_create_status', True)
 
 @socketio.on('join_group')
 def group_join(data):
@@ -53,6 +53,10 @@ def send_message(data):
             emit('receive_message', {'user': username, 'message': message}, room=group_id)
         else:
             emit('send_message_status', False)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, host="0.0.0.0", port=port)
 
 
 
