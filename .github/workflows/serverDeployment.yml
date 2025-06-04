@@ -1,0 +1,10 @@
+name: Deploy To Server
+
+on:
+  push:
+    branches:
+      - Master
+
+    paths:
+      - 'Server/**'
+
