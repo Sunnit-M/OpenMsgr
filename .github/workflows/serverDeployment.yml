@@ -3,7 +3,7 @@ name: Deploy To Server
 on:
   push:
     branches:
-      - Master
+      - master
 
     paths:
       - 'Server/**'
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clean up Prevous Instance
+      - name: Clean up Previous Instance
         uses: appleboy:ssh-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -23,7 +23,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             rm -rf ~/OpenMsgr/tmp/
-            echo "Killing posible existing OpenMsgr-Server container"
+            echo "Killing possible existing OpenMsgr-Server container"
             docker kill OpenMsgr-Server || true
             echo "Removing possible existing OpenMsgr-Server container"
             docker rm OpenMsgr-Server || true
@@ -60,7 +60,7 @@ jobs:
           script: |
             cd OpenMsgr/tmp/
             echo "Loading Docker Image"
-            gzip -d OpenMsgr-Server.tar.gz | docker load 
+            gzip -d OpenMsgr-Server.tar.gz < OpenMsgr-Server.tar.gz | docker load
             docker run -d --name OpenMsgr-Server -p 5000:5000 OpenMsgr-Server:latest
 
             
