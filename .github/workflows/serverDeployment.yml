@@ -1,56 +1,21 @@
-name: Deploy To Server
+name: Deploy To Server 
 
 on:
   push:
     branches:
       - master
+
     paths:
       - 'Server/**'
       - '.github/workflows/serverDeployment.yml'
       - 'Dockerfile'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-
-      - name: Build Docker Image
-        run: |
-          docker build -t OpenMsgr:latest ./Server
-
-      - name: Save Docker Image
-        run: |
-          docker save OpenMsgr:latest | gzip > OpenMsgr-Server.tar.gz
-
-      - name: Upload Docker Image Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: OpenMsgrDockerImage
-          path: OpenMsgr-Server.tar.gz
-
   deploy:
-    needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Docker Image Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: OpenMsgrDockerImage
-
-      - name: Upload Docker Image to Server
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: OpenMsgr-Server.tar.gz
-          target: OpenMsgr/tmp/OpenMsgr-Server.tar.gz
-
-      - name: Deploy on Server via SSH
+      - name: Clean up Previous Instance
         uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -58,14 +23,42 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             rm -rf ~/OpenMsgr/tmp/
+            echo "Killing possible existing openmsgr-server container"
+            docker kill openmsgr-server || true
+            echo "Removing possible existing openmsgr-server container"
+            docker rm openmsgr-server || true
+
             mkdir -p ~/OpenMsgr/tmp/
-            echo "Killing and Removing Old Container"
-            docker kill OpenMsgr-Server || true
-            docker rm OpenMsgr-Server || true
 
+
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Build Docker Image
+        run: |
+          docker build -t openmsgr-server:latest ./Server
+      
+      - name: Save Docker Image
+        run: |
+          docker save openmsgr-server:latest | gzip > openmsgr-server.tar.gz
+
+      - name: Upload Docker Image
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: openmsgr-server.tar.gz
+          target: OpenMsgr/tmp/openmsgr-server.tar.gz
+
+      - name: SSH to Server and Deploy
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd OpenMsgr/tmp/
             echo "Loading Docker Image"
-            cd ~/OpenMsgr/tmp/
-            gunzip -c OpenMsgr-Server.tar.gz | docker load
-
-            echo "Running Docker Container"
-            docker run -d --name OpenMsgr-Server -p 5000:5000 OpenMsgr-Server:latest
+            gzip -d openmsgr-server.tar.gz < openmsgr-server.tar.gz | docker load
+            docker run -d --name openmsgr-server -p 5000:5000 openmsgr-server:latest
