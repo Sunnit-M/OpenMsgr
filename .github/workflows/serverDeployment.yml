@@ -1,48 +1,47 @@
-name: Deploy To Server 
+name: Deploy To Server
 
 on:
   push:
     branches:
       - master
-
     paths:
       - 'Server/**'
       - '.github/workflows/serverDeployment.yml'
       - 'Dockerfile'
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clean up Previous Instance
-        uses: appleboy/ssh-action@v0.1.4
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            rm -rf ~/OpenMsgr/tmp/
-            echo "Killing possible existing OpenMsgr-Server container"
-            docker kill OpenMsgr-Server || true
-            echo "Removing possible existing OpenMsgr-Server container"
-            docker rm OpenMsgr-Server || true
-
-            mkdir -p ~/OpenMsgr/tmp/
-
-
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Build Docker Image
         run: |
           docker build -t OpenMsgr-Server:latest ./Server
-      
+
       - name: Save Docker Image
         run: |
           docker save OpenMsgr-Server:latest | gzip > OpenMsgr-Server.tar.gz
 
-      - name: Upload Docker Image
+      - name: Upload Docker Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenMsgrDockerImage
+          path: OpenMsgr-Server.tar.gz
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Docker Image Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: OpenMsgrDockerImage
+
+      - name: Upload Docker Image to Server
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -51,16 +50,22 @@ jobs:
           source: OpenMsgr-Server.tar.gz
           target: OpenMsgr/tmp/OpenMsgr-Server.tar.gz
 
-      - name: SSH to Server and Deploy
+      - name: Deploy on Server via SSH
         uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd OpenMsgr/tmp/
-            echo "Loading Docker Image"
-            gzip -d OpenMsgr-Server.tar.gz < OpenMsgr-Server.tar.gz | docker load
-            docker run -d --name OpenMsgr-Server -p 5000:5000 OpenMsgr-Server:latest
+            rm -rf ~/OpenMsgr/tmp/
+            mkdir -p ~/OpenMsgr/tmp/
+            echo "Killing and Removing Old Container"
+            docker kill OpenMsgr-Server || true
+            docker rm OpenMsgr-Server || true
 
-            
+            echo "Loading Docker Image"
+            cd ~/OpenMsgr/tmp/
+            gunzip -c OpenMsgr-Server.tar.gz | docker load
+
+            echo "Running Docker Container"
+            docker run -d --name OpenMsgr-Server -p 5000:5000 OpenMsgr-Server:latest
