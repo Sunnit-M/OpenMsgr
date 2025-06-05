@@ -1,6 +1,9 @@
 from flask import Flask, request
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 import os
+import eventlet
+
+eventlet.monkey_patch()
 
 app = Flask(__name__)
 
