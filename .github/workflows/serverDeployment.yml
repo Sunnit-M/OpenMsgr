@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Clean up Previous Instance
-        uses: appleboy:ssh-action@v0.1.4
+        uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
@@ -43,7 +43,7 @@ jobs:
           docker save OpenMsgr-Server:latest | gzip > OpenMsgr-Server.tar.gz
 
       - name: Upload Docker Image
-        uses: appleboy:scp-action@v0.1.4
+        uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
@@ -52,7 +52,7 @@ jobs:
           target: OpenMsgr/tmp/OpenMsgr-Server.tar.gz
 
       - name: SSH to Server and Deploy
-        uses: appleboy:ssh-action@v0.1.4
+        uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
