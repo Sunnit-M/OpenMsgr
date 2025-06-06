@@ -23,10 +23,10 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             rm -rf ~/OpenMsgr/tmp/
-            echo "Killing possible existing openmsgr-server container"
-            docker kill openmsgr-server || true
-            echo "Removing possible existing openmsgr-server container"
-            docker rm openmsgr-server || true
+            echo "Killing possible existing OpenMsgr-Server container"
+            docker kill OpenMsgr-Server || true
+            echo "Removing possible existing OpenMsgr-Server container"
+            docker rm OpenMsgr-Server || true
 
             mkdir -p ~/OpenMsgr/tmp/
 
@@ -36,11 +36,11 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t openmsgr-server:latest ./Server
+          docker build -t OpenMsgr-Server:latest ./Server
       
       - name: Save Docker Image
         run: |
-          docker save openmsgr-server:latest | gzip > openmsgr-server.tar.gz
+          docker save OpenMsgr-Server:latest | gzip > OpenMsgr-Server.tar.gz
 
       - name: Upload Docker Image
         uses: appleboy/scp-action@v0.1.4
@@ -48,8 +48,8 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: openmsgr-server.tar.gz
-          target: OpenMsgr/tmp/openmsgr-server.tar.gz
+          source: OpenMsgr-Server.tar.gz
+          target: OpenMsgr/tmp/OpenMsgr-Server.tar.gz
 
       - name: SSH to Server and Deploy
         uses: appleboy/ssh-action@v0.1.4
@@ -60,5 +60,7 @@ jobs:
           script: |
             cd OpenMsgr/tmp/
             echo "Loading Docker Image"
-            gzip -d openmsgr-server.tar.gz < openmsgr-server.tar.gz | docker load
-            docker run -d --name openmsgr-server -p 5000:5000 openmsgr-server:latest
+            gzip -d OpenMsgr-Server.tar.gz < OpenMsgr-Server.tar.gz | docker load
+            docker run -d --name OpenMsgr-Server -p 5000:5000 OpenMsgr-Server:latest
+
+            
