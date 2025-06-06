@@ -47,6 +47,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          password: ${{ secrets.SERVER_PASS }}
           source: openmsgr-server.tar.gz
           target: OpenMsgr/tmp/openmsgr-server.tar.gz
 
@@ -54,8 +55,9 @@ jobs:
         uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USERNAME }}
+          username: pi
           key: ${{ secrets.SERVER_SSH_KEY }}
+          password: ${{ secrets.SERVER_PASS }}
           script: |
             rm -rf ~/OpenMsgr/tmp/
             mkdir -p ~/OpenMsgr/tmp/
