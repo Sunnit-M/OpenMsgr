@@ -29,7 +29,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OpenMsgrDockerImage
-          path: OpenMsgr-Server.tar.gz
+          path: openmsgr-server.tar.gz
 
   deploy:
     needs: build
@@ -48,7 +48,7 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: OpenMsgr-Server.tar.gz
-          target: OpenMsgr/tmp/OpenMsgr-Server.tar.gz
+          target: OpenMsgr/tmp/openmsgr-server.tar.gz
 
       - name: Deploy on Server via SSH
         uses: appleboy/ssh-action@v0.1.4
