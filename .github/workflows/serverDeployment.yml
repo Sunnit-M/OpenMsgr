@@ -47,7 +47,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: OpenMsgr-Server.tar.gz
+          source: openmsgr-server.tar.gz
           target: OpenMsgr/tmp/openmsgr-server.tar.gz
 
       - name: Deploy on Server via SSH
